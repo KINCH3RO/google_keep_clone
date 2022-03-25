@@ -1,26 +1,59 @@
 <script lang="ts">
+import FirebaseService from "@/services/firebase.service";
 import { defineComponent } from "vue";
+import ImageContainer from "./ImageContainer.vue";
 
 export default defineComponent({
-    props: ['id', "title", "note", "color"],
+    props: ["id", "title", "note", "color", "img"],
+    methods: {
+        loadImg(img) {
+         
+            if (!img) {
+                return
+            }
+            let app = FirebaseService.getInstance();
+            app.downloadFile(img).then(url => {
+                this.imgSrc = url
+            }).catch(err => {
+                this.imgSrc = ''
+            });
+        }
+    },
     computed: {
         getNoteColor() {
-            if (this.color == 'default') {
-                return 'bg-white dark:bg-gray-800'
+            if (this.color == "default") {
+                return "bg-white dark:bg-gray-800";
             }
-
-            let value = `bg-${this.color}-300 dark:bg-${this.color}-300`
-            return value
+            let value = `bg-${this.color}-300 dark:bg-${this.color}-300`;
+            return value;
         }
-    }
+    },
+    data() {
+        return {
+            imgSrc: ''
+        }
+    },
+    watch: {
+        img(newImg, oldImg) {
+
+            this.loadImg(newImg)
+
+        }
+    },
+    created() {
+        this.loadImg(this.img)
+    },
+
+    components: { ImageContainer }
 })
 </script>
 <template>
     <div
-        @click="$emit('editNote', $props)"
+        @click="$emit('editNote', { ...$props, imgSrc })"
         class="w-64 overflow-hidden rounded-lg shadow-md cursor-pointer hover:opacity-80 transition-opacity"
         :class="getNoteColor"
     >
+        <ImageContainer v-if="imgSrc" :img="imgSrc" />
         <div class="p-6">
             <div>
                 <div

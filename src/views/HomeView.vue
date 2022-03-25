@@ -15,7 +15,7 @@ export default defineComponent({
     }
   },
   mounted() {
-    let app = new FirebaseService()
+    let app = FirebaseService.getInstance()
     // app.readDocuments('notes').then(data => {
     //   this.notes = data
     // })
@@ -35,7 +35,7 @@ export default defineComponent({
   },
   components: { InputArea, Card }
   , beforeUnmount() {
-    let app = new FirebaseService()
+    let app = FirebaseService.getInstance()
     app.destroySubscriber()
   }
 })
@@ -64,6 +64,7 @@ export default defineComponent({
           :note="doc.noteText"
           :id="doc.id"
           :color="doc.choosedColor"
+          :img="doc.imgPath"
         />
       </div>
     </div>

@@ -2,34 +2,50 @@
 import { initializeApp } from "firebase/app";
 import {
     doc, getFirestore, setDoc, collection, updateDoc, deleteDoc, getDocs,
-    onSnapshot
+    onSnapshot,
 } from "firebase/firestore";
+
+import { getStorage, ref, uploadBytes,getDownloadURL  } from 'firebase/storage'
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
- //your firebase config gere 
-};
-let app: any = null;
-let unsubscriber: any;
-// Initialize Firebase
+    apiKey: "",
+    authDomain: "",
+    projectId: "",
+    storageBucket: "",
+    messagingSenderId: "",
+    appId: ""
 
+};
+
+// Initialize Firebase
+let instance: FirebaseService;
 
 export default class FirebaseService {
-  
 
-    constructor() {
-        if (!app) {
+    app: any = null;
+    unsubscriber: any;
+    private constructor() {
+        this.app = initializeApp(firebaseConfig)
+    }
 
-            app = initializeApp(firebaseConfig)
+
+
+    public static getInstance() {
+        if (!instance) {
+            instance = new FirebaseService()
+
 
         }
+        return instance
+
     }
 
     async addData(collectionName: string, documentData: any) {
         try {
-            const db = getFirestore(app);
+            const db = getFirestore(this.app);
             const collectionRef = doc(collection(db, collectionName));
             await setDoc(collectionRef, documentData);
 
@@ -43,7 +59,7 @@ export default class FirebaseService {
 
     async updateData(collectionName: any, documentId: string, fieldsToUpdate: any) {
         try {
-            const db = getFirestore(app);
+            const db = getFirestore(this.app);
             const collectionRef = doc(db, collectionName, documentId);
             await updateDoc(collectionRef, fieldsToUpdate);
 
@@ -57,7 +73,7 @@ export default class FirebaseService {
 
     async deleteDocument(collectionName: any, documentId: string) {
         try {
-            const db = getFirestore(app);
+            const db = getFirestore(this.app);
             await deleteDoc(doc(db, collectionName, documentId));
 
         } catch (error) {
@@ -68,7 +84,7 @@ export default class FirebaseService {
 
     async readDocuments(collectionName: any) {
         let docs: any = []
-        const db = getFirestore(app);
+        const db = getFirestore(this.app);
         const querySnapshot = await getDocs(collection(db, collectionName));
         querySnapshot.forEach((doc) => {
             // doc.data() is never undefined for query doc snapshots
@@ -81,11 +97,11 @@ export default class FirebaseService {
 
     }
 
-    listenForChange(callback:any) {
-        const db = getFirestore(app);
+    listenForChange(callback: any) {
+        const db = getFirestore(this.app);
         const q = collection(db, "notes")
         this.destroySubscriber()
-         unsubscriber = onSnapshot(q, (querySnapshot) => {
+        this.unsubscriber = onSnapshot(q, (querySnapshot) => {
             const docs: any = [];
             querySnapshot.forEach((doc) => {
                 let docValue = doc.data()
@@ -97,10 +113,27 @@ export default class FirebaseService {
         });
     }
 
-    destroySubscriber(){
-        if(unsubscriber){
-            unsubscriber()
+    destroySubscriber() {
+        if (this.unsubscriber) {
+            this.unsubscriber()
         }
+
+    }
+
+    uploadFile(file: File) {
+        const storage = getStorage(this.app);
+        const storageRef = ref(storage, 'images/' + file.name);
+
+        // 'file' comes from the Blob or File API
+        return uploadBytes(storageRef, file)
+    }
+
+    downloadFile(refrencePath:string){
+
+        const storage = getStorage(this.app);
+        const storageRef = ref(storage,refrencePath);
+
+        return getDownloadURL(storageRef)
 
     }
 
